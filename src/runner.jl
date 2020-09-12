@@ -10,10 +10,9 @@ function gen_runner_code(testfilename, logfilename, testreportsdir, test_args)
     append!(empty!(ARGS), $(repr(test_args.exec)))
 
     ts = @testset ReportingTestSet "" begin
+        recordproperty("TestReportsWrapper", true)
         include($(repr(testfilename)))
     end
-
-    display_reporting_testset(ts)
 
     write($(repr(logfilename)), report(ts))
     exit(any_problems(ts))

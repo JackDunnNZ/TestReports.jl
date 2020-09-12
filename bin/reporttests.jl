@@ -8,10 +8,9 @@ script = """
 using Test
 using TestReports
 ts = @testset ReportingTestSet "" begin
+    recordproperty("TestReportsWrapper", true)
     include($(repr(testfilename)))
 end
-
-display_reporting_testset(ts)
 
 open("testlog.xml","w") do fh
     print(fh, report(ts))

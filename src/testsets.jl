@@ -19,6 +19,16 @@ function finish(ts::ReportingTestSet)
         return ts
     end
 
+    # If a ReportingTestset is being used outside of TestReports.test,
+    # an additional parent testset is needed for the display, flattening
+    # and reporting logic to work in the same way
+    if !get(ts.properties, "TestReportsWrapper", false)
+        ts = ReportingTestSet("", [ts], Dict())
+    end
+
+    # Display before flattening to match Pkg.test output
+    display_reporting_testset(ts)
+
     # We are the top level, lets do this
     flatten_results!(ts)
 end

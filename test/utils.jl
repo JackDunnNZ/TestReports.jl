@@ -12,7 +12,10 @@ replace_Int32s(str) = replace(str, "Int32" => "Int64")
 # remove stacktraces so reference strings work for different Julia versions
 remove_stacktraces(str) = replace(str, r"(Stacktrace:)[^<]*" => "")
 
-const clean_report = replace_Int32s ∘ replace_windows_filepaths ∘ strip_filepaths ∘ remove_stacktraces
+# remove test output - remove everything before "<?xml version"
+remove_test_output(str) = replace(str, r"^[\S\s]*(?=(<\?xml version))" => "")
+
+const clean_output = replace_Int32s ∘ replace_windows_filepaths ∘ strip_filepaths ∘ remove_stacktraces ∘ remove_test_output
 
 """
 `copy_test_package` copied from [`Pkg.jl/test/utils.jl`](https://github.com/JuliaLang/Pkg.jl/blob/v1.4.2/test/utils.jl#L209).
