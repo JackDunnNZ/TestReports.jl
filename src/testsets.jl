@@ -1,4 +1,20 @@
 
+"""
+    ReportingTestSet
+
+Custom `AbstractTestSet` type designed to be used by `TestReports.jl` for
+creation of JUnit XMLs.
+
+Does not throw an error when a test fails or has an error. Upon finishing,
+a `ReportingTestSet` will display the default test output, and then flatten
+to a structure that is suitable for report generation.
+
+A `ReportingTestSet` has the `description` and `results` fields as per a
+`DefaultTestSet`, and has an additional `properties` field which is used
+to record properties to be inserted into the report.
+
+See also: [`flatten_results!`](@ref), [`recordproperty`](@ref)
+"""
 mutable struct ReportingTestSet <: AbstractTestSet
     description::String
     results::Vector
@@ -28,12 +44,12 @@ end
 """
     any_problems(ts)
 
-Checks a testset to see if there were any problems.
+Checks a testset to see if there were any problems (`Error`s or `Fail`s).
 Note that unlike the `DefaultTestSet`, the `ReportingTestSet`
 does not throw an exception on a failure.
-Thus to set the exit code you should check it using `exit(any_problems(top_level_testset))`
+Thus to set the exit code from the runner code, we check it using `exit(any_problems(top_level_testset))`
 """
-any_problems(ts::AbstractTestSet) =  any(any_problems.(ts.results))
+any_problems(ts::AbstractTestSet) = any(any_problems.(ts.results))
 any_problems(::Pass) = false
 any_problems(::Fail) = true
 any_problems(::Broken) = false
@@ -47,7 +63,7 @@ any_problems(::Error) = true
     flatten_results!(ts::AbstractTestSet)
 
 Returns a flat structure 3 deep, of `TestSet` -> `TestSet` -> `Result`. This is necessary
-for writing a report, as a JUnitXML does not allow one testsuite to be nested in another.
+for writing a report, as a JUnit XML does not allow one testsuite to be nested in another.
 The top level `TestSet` becomes the testsuites element, and the middle level `TestSet`s
 become individual testsuite elements, and the `Result`s become the testcase elements.
 
@@ -64,11 +80,11 @@ function flatten_results!(ts::AbstractTestSet)
 end
 
 """
-    _flatten_results!(ts::AbstractTestSet) ::Vector{<:AbstractTestSet}
+    _flatten_results!(ts::AbstractTestSet)::Vector{<:AbstractTestSet}
 
 Recursively flatten `ts` to a vector of `TestSet`s.
 """
-function _flatten_results!(ts::AbstractTestSet) ::Vector{<:AbstractTestSet}
+function _flatten_results!(ts::AbstractTestSet)::Vector{<:AbstractTestSet}
     original_results = ts.results
     flattened_results = AbstractTestSet[]
     # Track results that are a Result so that if there are any, they can be added
@@ -117,10 +133,14 @@ _flatten_results!(rs::Result) = [rs]
     update_testset_properties!(childts::ReportingTestSet, ts::ReportingTestSet)
 
 Adds properties of `ts` to `childts`. If any properties being added already exist in
-`childts`, a warning is displayed and the value in `childts` is overwritten.
+`childts`, a warning is displayed and the value in `ts` is overwritten.
 
 If `ts` and\\or `childts` is not a `ReportingTestSet`, this is handled in the
-`AbstractTestSet` method.
+`AbstractTestSet` method:
+- If `ts` is not a `ReportingTestSet`, it has not properties to add to `childts`
+    and therefore nothing happens.
+- If `childts` is not a `ReportingTestSet` and `ts` has properties, then a warning
+    is shown.
 """
 function update_testset_properties!(childts::AbstractTestSet, ts::AbstractTestSet)
     if !isa(childts, ReportingTestSet) && isa(ts, ReportingTestSet) && !isempty(ts.properties)
@@ -147,7 +167,7 @@ end
 """
     handle_top_level_results!(ts::AbstractTestSet)
 
-If `ts.results` contains any `Results`, these are removed from `ts.results` and
+If `ts.results` contains any `Result`s, these are removed from `ts.results` and
 added to a new `ReportingTestSet`, which in turn is added to `ts.results`. This
 leaves `ts.results` only containing `AbstractTestSet`s.
 """
@@ -167,7 +187,7 @@ end
 """
     display_reporting_testset(ts::ReportingTestSet)
 
-Displays the test output in the same format as Pkg.test() by using a
+Displays the test output in the same format as `Pkg.test` by using a
 `DefaultTestSet`.
 """
 function display_reporting_testset(ts::ReportingTestSet)
@@ -191,7 +211,7 @@ end
 Populate `ts_default` with the supplied variable. If the variable is a `Result`
 then it is recorded. If it is a `ReportingTestSet` then a new `DefaultTestSet`
 with matching description is created, populated by recursively calling this
-function and then added to the results of `ts_default`.
+function and then adding to the results of `ts_default`.
 """
 add_to_ts_default!(ts_default::DefaultTestSet, result::Result) = record(ts_default, result)
 function add_to_ts_default!(ts_default::DefaultTestSet, ts::ReportingTestSet)

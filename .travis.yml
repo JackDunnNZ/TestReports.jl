@@ -21,3 +21,13 @@ git:
 matrix:
   allow_failures:
   - julia: nightly
+
+jobs:
+  include:
+    - stage: "Documentation"
+      julia: 1
+      os: linux
+      script:
+        - julia --project=docs/ -e 'using Pkg; Pkg.instantiate()'
+        - julia --project=docs/ docs/make.jl
+      after_success: skip
