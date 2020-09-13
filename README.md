@@ -47,7 +47,7 @@ end
 Below is a screen shot of TestReports being used with [GoCD](https://github.com/gocd/gocd/),
 to report an test failure in [DataDepsGenerators.jl](https://github.com/oxinabox/DataDepsGenerators.jl/).
 
-![Screenshot of GoCD web-interface showing failing tests](docs/assets/FailingTests.PNG)
+![Screenshot of GoCD web-interface showing failing tests](docs/src/assets/FailingTests.PNG)
 
 The corresponding `testlog.xml` file (after pretty printing) is below.
 
